@@ -5,7 +5,7 @@ vars:
   # debian version to use
   DEBIAN_VERSION: bullseye
   # the date at which the base image was built
-  BASE_IMAGE_DATE: '{{default "" .BASE_IMAGE_DATE}}'
+  BASE_IMAGE_DATE: '{{default "20230713" .BASE_IMAGE_DATE}}'
   IMAGE_HOST: '{{default "us.gcr.io" .IMAGE_HOST}}'
   IMAGE_PREFIX: '{{default "" .IMAGE_PREFIX}}'
   IMAGE_TAG:
