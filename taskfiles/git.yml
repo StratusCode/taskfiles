@@ -1,0 +1,14 @@
+version: "3"
+
+vars:
+  # short SHA of the commit
+  GIT_COMMIT:
+    sh: git rev-parse --short HEAD
+  # whether the git working directory is clean
+  GIT_TREE_STATE:
+    sh: |
+      if [[ $(git status --porcelain=v1 2>/dev/null | wc -l | xargs) = "0" ]]; then
+        echo "clean"
+      else
+        echo "dirty"
+      fi

@@ -1,0 +1,51 @@
+version: "3"
+
+vars:
+  DOCKER_PLATFORM: linux/amd64
+  # debian version to use
+  DEBIAN_VERSION: bullseye
+  # the date at which the base image was built
+  BASE_IMAGE_DATE: '{{default "" .BASE_IMAGE_DATE}}'
+  IMAGE_HOST: '{{default "us.gcr.io" .IMAGE_HOST}}'
+  IMAGE_PREFIX: '{{default "" .IMAGE_PREFIX}}'
+  IMAGE_TAG:
+    sh: |
+      echo -n "{{.GIT_COMMIT}}"
+      if [[ "{{.GIT_TREE_STATE}}" != "clean" ]]; then
+        echo "-dirty"
+      fi
+  BUILD_ARGS: >-
+    {{.BUILD_ARGS}}
+    DEBIAN_VERSION="{{.DEBIAN_VERSION}}"
+    DATE="{{.BASE_IMAGE_DATE}}"
+
+tasks:
+  build:
+    vars:
+      WORKING_DIR: '{{default "." .WORKING_DIR}}'
+      DOCKER_FILE: '{{.WORKING_DIR}}/{{default "Dockerfile" .DOCKER_FILE}}'
+      IMAGE_NAME: '{{default "" .IMAGE_NAME}}'
+      # internal use only, do not set
+      _FULL_IMAGE: "{{.IMAGE_HOST}}/{{.IMAGE_PREFIX}}{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
+    cmds:
+      - >-
+        docker buildx build
+        -f {{.DOCKER_FILE}}
+        --platform {{.DOCKER_PLATFORM}}
+        --ssh default
+        --pull
+        {{- range $index, $element := splitList " " .BUILD_ARGS }} --build-arg="{{ $element }}"{{ end }}
+        -t "{{._FULL_IMAGE}}"
+        {{.WORKING_DIR}}
+      - cmd: echo "{{._FULL_IMAGE}}"
+        silent: true
+
+  push:
+    vars:
+      IMAGE_NAME: '{{default "" .IMAGE_NAME}}'
+      # internal use only, do not set
+      _FULL_IMAGE: "{{.IMAGE_HOST}}/{{.IMAGE_PREFIX}}{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
+    cmds:
+      - docker push "{{._FULL_IMAGE}}"
+      - cmd: echo "{{._FULL_IMAGE}}"
+        silent: true
