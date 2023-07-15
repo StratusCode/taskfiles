@@ -3,31 +3,31 @@ version: "3"
 vars:
   DOCKER_PLATFORM: linux/amd64
   # debian version to use
-  DEBIAN_VERSION: bullseye
+  DOCKER_DEBIAN_VERSION: bullseye
   # the date at which the base image was built
-  BASE_IMAGE_DATE: '{{default "20230713" .BASE_IMAGE_DATE}}'
-  IMAGE_HOST: '{{default "us.gcr.io" .IMAGE_HOST}}'
-  IMAGE_PREFIX: '{{default "" .IMAGE_PREFIX}}'
-  IMAGE_TAG:
+  DOCKER_BASE_IMAGE_DATE: '{{default "20230714" .BASE_IMAGE_DATE}}'
+  DOCKER_IMAGE_HOST: '{{default "us.gcr.io" .DOCKER_IMAGE_HOST}}'
+  DOCKER_IMAGE_PREFIX: '{{default "" .DOCKER_IMAGE_PREFIX}}'
+  DOCKER_IMAGE_TAG:
     sh: |
       echo -n "{{.GIT_COMMIT}}"
       if [[ "{{.GIT_TREE_STATE}}" != "clean" ]]; then
         echo "-dirty"
       fi
-  BUILD_ARGS: >-
-    {{.BUILD_ARGS}}
+  DOCKER_BUILD_ARGS: >-
     DEBIAN_VERSION="{{.DEBIAN_VERSION}}"
     DATE="{{.BASE_IMAGE_DATE}}"
+  DOCKER_WORKING_DIR: '{{default "." .WORKING_DIR}}'
 
 tasks:
   build:
     vars:
-      WORKING_DIR: '{{default "." .WORKING_DIR}}'
-      DOCKER_FILE: '{{.WORKING_DIR}}/{{default "Dockerfile" .DOCKER_FILE}}'
-      IMAGE_NAME: '{{default "" .IMAGE_NAME}}'
+      DOCKER_FILE: '{{.DOCKER_WORKING_DIR}}/{{default "Dockerfile" .DOCKER_FILE}}'
+      IMAGE_NAME: '{{default "" .DOCKER_IMAGE_NAME}}'
       # internal use only, do not set
-      _FULL_IMAGE: "{{.IMAGE_HOST}}/{{.IMAGE_PREFIX}}{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
+      _DOCKER_IMAGE: "{{.DOCKER_IMAGE_HOST}}/{{.DOCKER_IMAGE_PREFIX}}{{.DOCKER_IMAGE_NAME}}:{{.DOCKER_IMAGE_TAG}}"
     cmds:
+      - echo "{{.BUILD_ARGS}}"
       - >-
         docker buildx build
         -f {{.DOCKER_FILE}}
@@ -35,17 +35,17 @@ tasks:
         --ssh default
         --pull
         {{- range $index, $element := splitList " " .BUILD_ARGS }} --build-arg="{{ $element }}"{{ end }}
-        -t "{{._FULL_IMAGE}}"
+        -t "{{._DOCKER_IMAGE}}"
         {{.WORKING_DIR}}
-      - cmd: echo "{{._FULL_IMAGE}}"
+      - cmd: echo "{{._DOCKER_IMAGE}}"
         silent: true
 
   push:
     vars:
-      IMAGE_NAME: '{{default "" .IMAGE_NAME}}'
+      IMAGE_NAME: '{{default "" .DOCKER_IMAGE_NAME}}'
       # internal use only, do not set
-      _FULL_IMAGE: "{{.IMAGE_HOST}}/{{.IMAGE_PREFIX}}{{.IMAGE_NAME}}:{{.IMAGE_TAG}}"
+      _DOCKER_IMAGE: "{{.DOCKER_IMAGE_HOST}}/{{.DOCKER_IMAGE_PREFIX}}{{.DOCKER_IMAGE_NAME}}:{{.DOCKER_IMAGE_TAG}}"
     cmds:
-      - docker push "{{._FULL_IMAGE}}"
-      - cmd: echo "{{._FULL_IMAGE}}"
+      - docker push "{{._DOCKER_FULL_IMAGE}}"
+      - cmd: echo "{{._DOCKER_FULL_IMAGE}}"
         silent: true

@@ -1,9 +1,9 @@
 version: "3"
 
 vars:
-  PYTHON_VERSION: '{{.PYTHON_VERSION | default "3.11"}}'
-  PYTHON_PTH_DIRS: '{{.PYTHON_PTH_DIRS | default "src"}}'
-  VENV_PATH: '{{.VENV_PATH | default ".venv"}}'
+  PDM_PYTHON_VERSION: 'default "3.11" .PYTHON_VERSION}}'
+  PDM_PYTHON_PTH_DIRS: '{{default "src" .PYTHON_PTH_DIRS}}'
+  PDM_VENV_PATH: '{{default ".venv" .VENV_PATH}}'
 
 tasks:
   venv:
@@ -11,9 +11,9 @@ tasks:
     run: once
     status:
       # check if the virtual environment exists
-      - '[[ ! -z "{{.VENV_PATH}}" ]]'
+      - '[[ ! -z "{{.PDM_VENV_PATH}}" ]]'
     cmds:
-      - cmd: pdm venv create {{.PYTHON_VERSION}}
+      - cmd: pdm venv create {{.PDM_PYTHON_VERSION}}
         silent: true
       - task: venv-pth
         silent: true
@@ -27,19 +27,19 @@ tasks:
     run: once
     internal: true
     vars:
-      BASE_PATH: "{{.VENV_PATH}}/lib/python{{.PYTHON_VERSION}}/site-packages"
+      _PDM_BASE_PATH: "{{.PDM_VENV_PATH}}/lib/python{{.PDM_PYTHON_VERSION}}/site-packages"
       CWD:
         sh: pwd
-      TARGET: "{{.BASE_PATH}}/dev.pth"
+      _PDM_TARGET: "{{._PDM_BASE_PATH}}/dev.pth"
     cmds:
-      - cmd: echo "{{.PYTHON_PTH_DIRS}}" > {{.TARGET}}
+      - cmd: echo "{{.PDM_PYTHON_PTH_DIRS}}" > {{._PDM_TARGET}}
         silent: true
     status:
-      - test - "{{.TARGET}}"
+      - test - "{{._PDM_TARGET}}"
       # ensure that the contents of the file are correct
-      - '[[ cat "{{.TARGET}}" = "{{.PYTHON_PTH_DIRS}}" ]]'
+      - '[[ cat "{{._PDM_TARGET}}" = "{{.PDM_PYTHON_PTH_DIRS}}" ]]'
     generates:
-      - "{{.TARGET}}"
+      - "{{._PDM_TARGET}}"
 
   lock:
     desc: Lock python dependencies for the virtual environment.
@@ -68,7 +68,7 @@ tasks:
       - venv
     sources:
       - pdm.lock
-      - "{{.VENV_PATH}}"
+      - "{{.PDM_VENV_PATH}}"
     cmds:
       - pdm install
 
