@@ -5,7 +5,7 @@ vars:
   # debian version to use
   DOCKER_DEBIAN_VERSION: bullseye
   # the date at which the base image was built
-  DOCKER_BASE_IMAGE_DATE: '{{default "20230714" .BASE_IMAGE_DATE}}'
+  DOCKER_BASE_IMAGE_DATE: '{{default "20230715" .DOCKER_BASE_IMAGE_DATE}}'
   DOCKER_IMAGE_HOST: '{{default "us.gcr.io" .DOCKER_IMAGE_HOST}}'
   DOCKER_IMAGE_PREFIX: '{{default "" .DOCKER_IMAGE_PREFIX}}'
   DOCKER_IMAGE_TAG:
@@ -15,8 +15,8 @@ vars:
         echo "-dirty"
       fi
   DOCKER_BUILD_ARGS: >-
-    DEBIAN_VERSION="{{.DEBIAN_VERSION}}"
-    DATE="{{.BASE_IMAGE_DATE}}"
+    DEBIAN_VERSION="{{.DOCKER_DEBIAN_VERSION}}"
+    DATE="{{.DOCKER_BASE_IMAGE_DATE}}"
   DOCKER_WORKING_DIR: '{{default "." .WORKING_DIR}}'
 
 tasks:
@@ -27,16 +27,15 @@ tasks:
       # internal use only, do not set
       _DOCKER_IMAGE: "{{.DOCKER_IMAGE_HOST}}/{{.DOCKER_IMAGE_PREFIX}}{{.DOCKER_IMAGE_NAME}}:{{.DOCKER_IMAGE_TAG}}"
     cmds:
-      - echo "{{.BUILD_ARGS}}"
       - >-
         docker buildx build
         -f {{.DOCKER_FILE}}
         --platform {{.DOCKER_PLATFORM}}
         --ssh default
         --pull
-        {{- range $index, $element := splitList " " .BUILD_ARGS }} --build-arg="{{ $element }}"{{ end }}
+        {{- range $index, $element := splitList " " .DOCKER_BUILD_ARGS }} --build-arg="{{ $element }}"{{ end }}
         -t "{{._DOCKER_IMAGE}}"
-        {{.WORKING_DIR}}
+        {{.DOCKER_WORKING_DIR}}
       - cmd: echo "{{._DOCKER_IMAGE}}"
         silent: true
 
@@ -46,6 +45,6 @@ tasks:
       # internal use only, do not set
       _DOCKER_IMAGE: "{{.DOCKER_IMAGE_HOST}}/{{.DOCKER_IMAGE_PREFIX}}{{.DOCKER_IMAGE_NAME}}:{{.DOCKER_IMAGE_TAG}}"
     cmds:
-      - docker push "{{._DOCKER_FULL_IMAGE}}"
-      - cmd: echo "{{._DOCKER_FULL_IMAGE}}"
+      - docker push "{{._DOCKER_IMAGE}}"
+      - cmd: echo "{{._DOCKER_IMAGE}}"
         silent: true
