@@ -5,7 +5,7 @@ vars:
   # debian version to use
   DOCKER_DEBIAN_VERSION: bullseye
   # the date at which the base image was built
-  DOCKER_BASE_IMAGE_DATE: '{{default "20231023" .DOCKER_BASE_IMAGE_DATE}}'
+  DOCKER_BASE_IMAGE_DATE: '{{default "20231130" .DOCKER_BASE_IMAGE_DATE}}'
   DOCKER_IMAGE_HOST: '{{default "us.gcr.io" .DOCKER_IMAGE_HOST}}'
   DOCKER_IMAGE_PREFIX: '{{default "" .DOCKER_IMAGE_PREFIX}}'
   DOCKER_IMAGE_TAG:
